@@ -52,6 +52,7 @@ def test_image_audit_runs_the_published_digest_from_a_clean_clone() -> None:
     assert workflow["permissions"] == {"contents": "read"}
     assert "sha256:a78ed0769aaf6b5a0d2a09eb7a4a86904d9f0dbf08b7df2ade5d59b07523210f" in text
     assert "git clone --branch v0.1.0 --depth 1" in text
+    assert "python scripts/release_audit.py check-tracked" in text
     assert "import fitz; import paper_rag" in text
     assert "docker export" in text
     assert "scripts/start_services.sh --no-browser" in text

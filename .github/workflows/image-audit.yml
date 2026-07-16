@@ -23,10 +23,7 @@ jobs:
             https://github.com/acemilee/metasurface-paper-RAG.git "$RELEASE_DIR"
           cd "$RELEASE_DIR"
           test "$(git rev-parse HEAD)" = "66ef7358b3eb89d988558e01b82f49146d71a1fe"
-          if git ls-files | grep -Ei '(^|/)(data|docs|evals|models|papers)(/|$)|\.pdf$|(^|/)\.env$'; then
-            echo "Forbidden private path is tracked by the release tag." >&2
-            exit 1
-          fi
+          python scripts/release_audit.py check-tracked
 
       - name: Pull anonymously and verify the runtime
         shell: bash
