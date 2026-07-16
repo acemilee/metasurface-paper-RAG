@@ -69,4 +69,4 @@ jobs:
         shell: bash
         run: |
           docker compose down --volumes --remove-orphans || true
-          rm -rf data models .env
+          sudo rm -rf data models .env
