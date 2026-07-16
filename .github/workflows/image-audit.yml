@@ -32,6 +32,12 @@ jobs:
           docker run --rm "$IMAGE" python -c \
             "import pathlib; import fitz; import paper_rag; assert pathlib.Path('/app/LICENSE').is_file(); assert pathlib.Path('/app/THIRD_PARTY_NOTICES.md').is_file(); print(fitz.__doc__.splitlines()[0])"
 
+      - name: Install the browser acceptance runtime
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check "playwright==1.61.0"
+          python -m playwright install --with-deps chromium
+
       - name: Scan the published root filesystem
         shell: bash
         run: |
@@ -55,6 +61,9 @@ jobs:
           curl --fail --silent http://127.0.0.1:8010/api/documents > "$RUNNER_TEMP/library.json"
           python -c "import json, os; data=json.load(open(os.environ['RUNNER_TEMP'] + '/library.json', encoding='utf-8')); assert data['items'] == []"
           curl --fail --silent --output /dev/null http://127.0.0.1:8010/
+          python scripts/verify_filename_search_ui.py
+          python scripts/verify_formula_ui.py
+          python scripts/verify_domain_admission_ui.py
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -64,6 +73,8 @@ jobs:
             ${{ runner.temp }}/image-files.txt
             ${{ runner.temp }}/readiness.json
             ${{ runner.temp }}/library.json
+            ${{ env.RELEASE_DIR }}/evals/results/*.json
+            ${{ env.RELEASE_DIR }}/evals/results/*.png
           if-no-files-found: warn
 
       - name: Clean up acceptance services
