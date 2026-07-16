@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -20,6 +21,10 @@ from paper_rag.services.formula_quality import run_formula_quality_acceptance
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_PDF = ROOT / "Dynamical absorption manipulation in a graphene-based optically transparent and flexible metasurface.pdf"
+requires_sample_pdf = pytest.mark.skipif(
+    not SAMPLE_PDF.is_file(),
+    reason="private regression PDF is not distributed",
+)
 
 
 def _quality_session(tmp_path: Path) -> tuple[Session, list[Document], list[Formula]]:
@@ -82,6 +87,7 @@ def _quality_session(tmp_path: Path) -> tuple[Session, list[Document], list[Form
     return session, documents, formulas
 
 
+@requires_sample_pdf
 def test_quality_acceptance_is_stratified_deterministic_and_passes_clean_sample(tmp_path: Path) -> None:
     session, documents, formulas = _quality_session(tmp_path)
 
@@ -106,6 +112,7 @@ def test_quality_acceptance_is_stratified_deterministic_and_passes_clean_sample(
     assert first.sampled_formula_ids == second.sampled_formula_ids
 
 
+@requires_sample_pdf
 def test_quality_acceptance_fails_instead_of_lowering_insufficient_sample_threshold(tmp_path: Path) -> None:
     session, documents, formulas = _quality_session(tmp_path)
 
@@ -123,6 +130,7 @@ def test_quality_acceptance_fails_instead_of_lowering_insufficient_sample_thresh
     }
 
 
+@requires_sample_pdf
 def test_quality_acceptance_blocks_stale_parser_and_crop_hash_tampering(tmp_path: Path) -> None:
     session, documents, formulas = _quality_session(tmp_path)
     formulas[0].parser_version = "legacy-v1"

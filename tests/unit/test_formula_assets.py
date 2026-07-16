@@ -1,6 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -13,8 +14,13 @@ from paper_rag.services.formula_assets import refresh_formula_source_crop_hashes
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_PDF = ROOT / "Dynamical absorption manipulation in a graphene-based optically transparent and flexible metasurface.pdf"
+requires_sample_pdf = pytest.mark.skipif(
+    not SAMPLE_PDF.is_file(),
+    reason="private regression PDF is not distributed",
+)
 
 
+@requires_sample_pdf
 def test_source_crop_hash_is_stable_and_invalid_regions_fail_closed() -> None:
     engine = create_engine(
         "sqlite+pysqlite://",

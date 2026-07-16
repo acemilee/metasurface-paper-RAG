@@ -21,6 +21,10 @@ from scripts.backfill_formulas import parse_pages
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_PDF = ROOT / "Dynamical absorption manipulation in a graphene-based optically transparent and flexible metasurface.pdf"
+requires_sample_pdf = pytest.mark.skipif(
+    not SAMPLE_PDF.is_file(),
+    reason="private regression PDF is not distributed",
+)
 
 
 def _session() -> Session:
@@ -94,6 +98,7 @@ def _counts(session: Session) -> tuple[int, int]:
     )
 
 
+@requires_sample_pdf
 def test_backfill_plan_is_read_only_and_reports_only_changed_chunks() -> None:
     session, document, chunk = _build_backfill_fixture()
     before = _counts(session)
@@ -167,6 +172,7 @@ class DropLastVectorOnceCollection(FakeCollection):
         super().upsert(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
 
 
+@requires_sample_pdf
 def test_backfill_apply_updates_only_changed_chunks_and_is_idempotent() -> None:
     session, document, chunk = _build_backfill_fixture()
     settings = Settings(chunk_target_chars=1400, chunk_overlap_chars=180)
@@ -201,6 +207,7 @@ def test_backfill_apply_updates_only_changed_chunks_and_is_idempotent() -> None:
     assert len(collection.upserts) == 1
 
 
+@requires_sample_pdf
 def test_backfill_compensates_vectors_and_rolls_back_database_on_partial_failure() -> None:
     session, document, chunk = _build_backfill_fixture()
     original_content = chunk.content
@@ -233,6 +240,7 @@ def test_parse_pages_accepts_ranges_and_rejects_invalid_values() -> None:
         parse_pages("four")
 
 
+@requires_sample_pdf
 def test_backfill_retries_a_vector_missing_after_the_first_batch_upsert() -> None:
     session, document, chunk = _build_backfill_fixture()
     settings = Settings(chunk_target_chars=1400, chunk_overlap_chars=180)

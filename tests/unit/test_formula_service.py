@@ -1,6 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -20,6 +21,10 @@ from paper_rag.services.pdf_parser import ParsedPage, ParsedTextBlock, parse_tex
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_PDF = ROOT / "Dynamical absorption manipulation in a graphene-based optically transparent and flexible metasurface.pdf"
+requires_sample_pdf = pytest.mark.skipif(
+    not SAMPLE_PDF.is_file(),
+    reason="private regression PDF is not distributed",
+)
 
 
 def _session() -> Session:
@@ -38,6 +43,7 @@ def test_plain_resistance_paragraph_is_not_formula() -> None:
     assert detect_formula_regions(ParsedPage(1, block.text, [block])) == []
 
 
+@requires_sample_pdf
 def test_kubo_multiline_equations_are_grouped_from_real_pdf_layout() -> None:
     page = parse_text_pdf(SAMPLE_PDF, uuid4()).pages[3]
 
@@ -54,6 +60,7 @@ def test_kubo_multiline_equations_are_grouped_from_real_pdf_layout() -> None:
     assert "377" not in by_number["3"].raw_text
 
 
+@requires_sample_pdf
 def test_formula_records_preserve_group_number_version_and_fidelity() -> None:
     document_id = uuid4()
     page = parse_text_pdf(SAMPLE_PDF, document_id).pages[3]
@@ -73,6 +80,7 @@ def test_formula_records_preserve_group_number_version_and_fidelity() -> None:
     assert [record.id for record in records] == [record.id for record in repeated]
 
 
+@requires_sample_pdf
 def test_numbered_formula_id_survives_small_bbox_drift() -> None:
     document_id = uuid4()
     original = parse_text_pdf(SAMPLE_PDF, document_id).pages[3]
@@ -125,6 +133,7 @@ def test_formula_context_does_not_cross_columns_or_neighbor_boundaries() -> None
     assert "impedance relation" not in (records["3"].physical_meaning or "")
 
 
+@requires_sample_pdf
 def test_targeted_formula_backfill_is_idempotent_and_does_not_rebuild_chunks() -> None:
     session = _session()
     document_id = uuid4()

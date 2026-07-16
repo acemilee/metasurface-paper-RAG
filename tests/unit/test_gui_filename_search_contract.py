@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -92,6 +94,11 @@ def test_rendering_does_not_prune_selected_documents_to_visible_results() -> Non
     assert "state.selectedIds.delete(check.document_id)" in javascript
 
 
+@pytest.mark.skipif(
+    not (ROOT / "docs/MVP_UX_AND_LIBRARY_GAPS.md").is_file()
+    or not (ROOT / "HANDOFF.md").is_file(),
+    reason="internal project memory is not distributed",
+)
 def test_project_memory_records_filename_search_boundary() -> None:
     memo = (ROOT / "docs/MVP_UX_AND_LIBRARY_GAPS.md").read_text(encoding="utf-8")
     handoff = (ROOT / "HANDOFF.md").read_text(encoding="utf-8")

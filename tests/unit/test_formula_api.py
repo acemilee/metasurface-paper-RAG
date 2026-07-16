@@ -20,6 +20,10 @@ from paper_rag.models.formula import Formula
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_PDF = ROOT / "Dynamical absorption manipulation in a graphene-based optically transparent and flexible metasurface.pdf"
+requires_sample_pdf = pytest.mark.skipif(
+    not SAMPLE_PDF.is_file(),
+    reason="private regression PDF is not distributed",
+)
 
 
 def _build_formula_client(
@@ -73,6 +77,7 @@ def _build_formula_client(
     return client, formula_id
 
 
+@requires_sample_pdf
 def test_formula_image_endpoint_renders_the_original_pdf_bbox() -> None:
     client, formula_id = _build_formula_client()
 
@@ -89,6 +94,7 @@ def test_formula_image_endpoint_renders_the_original_pdf_bbox() -> None:
     "bbox_json",
     ["null", "[1, 2, 3]", "[0, 0, 0, 10]", "[0, 0, 1e309, 10]"],
 )
+@requires_sample_pdf
 def test_formula_image_rejects_invalid_bbox(bbox_json: str) -> None:
     client, formula_id = _build_formula_client(bbox_json=bbox_json)
 
@@ -98,6 +104,7 @@ def test_formula_image_rejects_invalid_bbox(bbox_json: str) -> None:
     assert response.json()["detail"] == "Formula source region is invalid"
 
 
+@requires_sample_pdf
 def test_formula_image_rejects_page_outside_pdf() -> None:
     client, formula_id = _build_formula_client(page_number=999)
 
