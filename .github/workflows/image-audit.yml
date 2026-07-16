@@ -8,7 +8,7 @@ permissions:
 
 env:
   IMAGE: ghcr.io/acemilee/metasurface-paper-rag@sha256:a78ed0769aaf6b5a0d2a09eb7a4a86904d9f0dbf08b7df2ade5d59b07523210f
-  RELEASE_DIR: ${{ runner.temp }}/metasurface-paper-RAG-v0.1.0
+  RELEASE_DIR: /tmp/metasurface-paper-RAG-v0.1.0
   COMPOSE_PROJECT_NAME: metasurface_paper_rag_release_acceptance
 
 jobs:
