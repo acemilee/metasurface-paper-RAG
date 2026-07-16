@@ -17,6 +17,8 @@ data/domain_gate_eval/
 /models/
 /papers/
 /evals/
+/tests/unit/test_domain_admission_acceptance.py
+/tests/unit/test_formula_phase_f_acceptance.py
 /docs/
 /release-artifacts/
 /build/

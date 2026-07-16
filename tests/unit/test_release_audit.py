@@ -30,6 +30,23 @@ def test_public_inventory_excludes_private_and_generated_state(tmp_path: Path) -
     assert Path("tests/__pycache__/test_x.pyc") not in paths
 
 
+def test_public_inventory_excludes_tests_that_require_private_evals(
+    tmp_path: Path,
+) -> None:
+    private_tests = (
+        Path("tests/unit/test_domain_admission_acceptance.py"),
+        Path("tests/unit/test_formula_phase_f_acceptance.py"),
+    )
+    for relative in private_tests:
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("from evals import private_runner\n", encoding="utf-8")
+
+    paths = collect_public_paths(tmp_path)
+
+    assert not set(private_tests) & set(paths)
+
+
 def test_audit_rejects_pdf_env_and_realistic_secrets(tmp_path: Path) -> None:
     pdf = tmp_path / "paper.pdf"
     env = tmp_path / ".env"

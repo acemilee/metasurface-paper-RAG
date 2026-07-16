@@ -25,6 +25,10 @@ PUBLIC_ROOT_FILES = {
     "THIRD_PARTY_NOTICES.md",
 }
 PUBLIC_DIRS = {".github", "alembic", "scripts", "src", "tests"}
+PRIVATE_TEST_FILES = {
+    Path("tests/unit/test_domain_admission_acceptance.py"),
+    Path("tests/unit/test_formula_phase_f_acceptance.py"),
+}
 SKIP_PARTS = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 FORBIDDEN_SUFFIXES = {
     ".pdf",
@@ -59,6 +63,7 @@ def collect_public_paths(root: Path) -> list[Path]:
             if (
                 path.is_file()
                 and not path.is_symlink()
+                and relative not in PRIVATE_TEST_FILES
                 and not (set(relative.parts) & SKIP_PARTS)
                 and path.suffix != ".pyc"
             ):
