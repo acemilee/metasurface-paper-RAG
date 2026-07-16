@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>智能论文库</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script defer src="/static/vendor/lucide.min.js"></script>
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">R</span><strong>智能论文库</strong></div>
+      <div class="topbar-meta">
+        <a class="source-license-link" href="https://github.com/acemilee/metasurface-paper-RAG/tree/v0.1.0" target="_blank" rel="noopener noreferrer">源代码与许可证</a>
+        <div class="service-state" id="service-state"><span class="status-dot"></span><span>连接中</span></div>
+      </div>
+    </header>
+
+    <aside class="library-panel" aria-label="论文库">
+      <div class="panel-heading">
+        <div><span class="eyebrow">LOCAL LIBRARY</span><h1>论文库</h1></div>
+        <button class="icon-button" id="refresh-library" type="button" title="刷新论文库" aria-label="刷新论文库"><i data-lucide="refresh-cw"></i></button>
+      </div>
+      <label class="library-search">
+        <i data-lucide="search"></i>
+        <input id="filename-search" type="search" autocomplete="off" aria-label="按 PDF 文件名检索" placeholder="检索 PDF 文件名">
+      </label>
+      <p id="library-search-status" class="library-search-status" aria-live="polite" hidden></p>
+      <div class="library-summary"><strong id="document-count">0</strong><span id="document-count-label">篇已收录</span></div>
+      <div class="library-scroll-region">
+        <div class="document-list" id="document-list" aria-live="polite"></div>
+        <button class="secondary-button full-width" id="load-more" type="button" hidden>加载更多</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <section class="control-strip">
+        <div class="conversation-control" aria-label="研究会话">
+          <i data-lucide="messages-square"></i>
+          <select id="conversation-select" aria-label="选择研究会话"></select>
+          <button class="icon-button" id="new-conversation" type="button" title="新建会话" aria-label="新建会话"><i data-lucide="message-square-plus"></i></button>
+          <button class="icon-button" id="rename-conversation" type="button" title="重命名会话" aria-label="重命名会话"><i data-lucide="pencil"></i></button>
+          <button class="icon-button" id="reset-conversation" type="button" title="清空当前会话" aria-label="清空当前会话"><i data-lucide="rotate-ccw"></i></button>
+          <button class="icon-button" id="delete-conversation" type="button" title="删除当前会话" aria-label="删除当前会话"><i data-lucide="message-square-x"></i></button>
+        </div>
+        <div class="scope-control" role="group" aria-label="检索范围">
+          <button class="scope-option active" type="button" data-scope="all">全部论文</button>
+          <button class="scope-option" type="button" data-scope="selected">已选论文 <span id="selected-count">0</span></button>
+        </div>
+        <form id="key-form" class="key-form">
+          <label class="input-shell"><i data-lucide="key-round"></i><input id="deepseek-key" type="password" autocomplete="off" placeholder="DeepSeek API Key" required></label>
+          <button class="secondary-button" type="submit">连接模型</button>
+        </form>
+        <span class="key-state" id="key-status"></span>
+      </section>
+
+      <section class="upload-strip">
+        <div class="upload-toolbar">
+          <form id="upload-form">
+            <label class="file-picker"><i data-lucide="files"></i><span id="file-label">选择 PDF</span><input id="pdf-file" type="file" accept="application/pdf,.pdf" multiple required></label>
+            <button class="primary-button" id="upload-submit" type="submit">开始上传</button>
+          </form>
+          <div class="ingestion-state" id="ingestion-wrap" hidden>
+            <div class="progress-line"><progress id="ingestion-progress" max="100" value="0"></progress><span id="ingestion-percent">0%</span></div>
+            <p id="ingestion-status" aria-live="polite"></p>
+          </div>
+        </div>
+        <section class="upload-queue" id="upload-queue" aria-label="上传队列" hidden>
+          <div class="upload-queue-heading">
+            <p id="upload-summary">尚未选择文件</p>
+            <div class="upload-queue-actions">
+              <button class="secondary-button" id="cancel-upload" type="button" hidden><i data-lucide="circle-stop"></i><span>取消待上传</span></button>
+              <button class="icon-button" id="clear-upload" type="button" title="清理已结束任务" aria-label="清理已结束任务"><i data-lucide="list-x"></i></button>
+            </div>
+          </div>
+          <div class="upload-items" id="upload-items" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section class="conversation" id="conversation" aria-live="polite">
+        <div class="empty-state" id="empty-state">
+          <i data-lucide="library-big"></i>
+          <h2>知识库已就绪</h2>
+          <p id="scope-summary">将从全部已入库论文中检索证据</p>
+        </div>
+      </section>
+
+      <section class="composer">
+        <form id="chat-form">
+          <textarea id="question" rows="3" placeholder="输入论文问题" required></textarea>
+          <button class="cancel-button" id="cancel-button" type="button" title="取消问答" aria-label="取消问答" hidden><i data-lucide="square"></i></button>
+          <button class="send-button" id="send-button" type="submit" title="发送问题" aria-label="发送问题"><i data-lucide="arrow-up"></i></button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="delete-dialog" class="delete-dialog">
+    <form method="dialog" class="dialog-heading">
+      <div><span class="eyebrow">DELETION REVIEW</span><h2>删除论文</h2></div>
+      <button class="icon-button" type="submit" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button>
+    </form>
+    <div id="delete-check-content" class="delete-check-content" aria-live="polite"></div>
+    <form id="delete-form" class="delete-form" hidden>
+      <label>输入完整文件名以确认删除<input id="delete-confirm-filename" autocomplete="off"></label>
+      <div class="dialog-actions">
+        <button class="secondary-button" id="delete-cancel" type="button">取消</button>
+        <button class="danger-button" id="delete-submit" type="submit" disabled><i data-lucide="trash-2"></i><span>永久删除</span></button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

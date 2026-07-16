@@ -1,0 +1,139 @@
+name: rag
+
+x-app: &app
+  build:
+    context: .
+  image: ${PAPER_RAG_IMAGE:-ghcr.io/acemilee/metasurface-paper-rag:0.1.0}
+  working_dir: /app
+  init: true
+
+x-app-environment: &app-environment
+  PAPER_RAG_POSTGRES_DSN: postgresql+psycopg://paper_rag:paper_rag@postgres:5432/paper_rag
+  PAPER_RAG_UPLOAD_DIR: /app/data/uploads
+  PAPER_RAG_PARSED_DIR: /app/data/parsed
+  PAPER_RAG_CHROMA_DIR: /app/data/chroma
+  PAPER_RAG_EMBEDDING_PROVIDER: http
+  PAPER_RAG_EMBEDDING_SERVICE_URL: http://embedding:8011
+  PAPER_RAG_EMBEDDING_MODEL_ID: BAAI/bge-m3
+  PAPER_RAG_EMBEDDING_MODEL_PATH: /app/models/BAAI-bge-m3
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paper_rag
+      POSTGRES_USER: paper_rag
+      POSTGRES_PASSWORD: paper_rag
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paper_rag -d paper_rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - paper_rag_postgres:/var/lib/postgresql/data
+
+  model-init:
+    <<: *app
+    command:
+      - python
+      - scripts/bootstrap_model.py
+      - --target
+      - /app/models/BAAI-bge-m3
+    volumes:
+      - ./models:/app/models
+
+  migrate:
+    <<: *app
+    command: ["python", "scripts/migrate_and_verify.py"]
+    environment:
+      <<: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  embedding:
+    <<: *app
+    command:
+      - python
+      - -m
+      - uvicorn
+      - paper_rag.embedding_server:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8011"
+    restart: unless-stopped
+    environment:
+      <<: *app-environment
+      PAPER_RAG_EMBEDDING_PROVIDER: sentence_transformer
+    volumes:
+      - ./models:/app/models:ro
+    depends_on:
+      model-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8011/health', timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 180
+      start_period: 30s
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "paper_rag.worker"]
+    restart: unless-stopped
+    environment:
+      <<: *app-environment
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      embedding:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    command:
+      - python
+      - -m
+      - uvicorn
+      - paper_rag.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
+    restart: unless-stopped
+    environment:
+      <<: *app-environment
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "127.0.0.1:8010:8010"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      embedding:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import json,urllib.request; data=json.load(urllib.request.urlopen('http://127.0.0.1:8010/ready', timeout=5)); assert data['ready'] is True
+      interval: 10s
+      timeout: 6s
+      retries: 180
+      start_period: 30s
+
+volumes:
+  paper_rag_postgres:

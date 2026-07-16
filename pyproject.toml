@@ -1,0 +1,37 @@
+[project]
+name = "paper-rag"
+version = "0.1.0"
+description = "Local, evidence-grounded paper RAG MVP"
+authors = [{name = "acemilee"}]
+license = "AGPL-3.0-only"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.136,<1.0",
+  "uvicorn>=0.46,<1.0",
+  "openai>=2.0,<3.0",
+  "alembic>=1.15,<2.0",
+  "sqlalchemy>=2.0,<3.0",
+  "psycopg[binary,pool]>=3.3,<4.0",
+  "pydantic-settings>=2.14,<3.0",
+  "python-multipart>=0.0.20,<1.0",
+  "PyMuPDF>=1.27,<2.0",
+  "pdfplumber>=0.11,<1.0",
+  "paddleocr>=3.7,<4.0",
+  "paddlepaddle>=3.3,<4.0",
+  "psutil>=7.0,<8.0",
+  "chromadb>=1.5,<2.0",
+  "sentence-transformers>=5.6,<6.0",
+  "huggingface-hub>=0.36,<1.0",
+  "latex2mathml>=3.78,<4.0",
+]
+
+[project.urls]
+Source = "https://github.com/acemilee/metasurface-paper-RAG"
+Issues = "https://github.com/acemilee/metasurface-paper-RAG/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=9.0,<10.0", "httpx>=0.28,<1.0", "playwright>=1.61,<2.0", "PyYAML>=6.0,<7.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

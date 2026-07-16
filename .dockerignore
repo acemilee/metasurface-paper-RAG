@@ -1,0 +1,13 @@
+.git
+.env
+.pytest_cache/
+**/__pycache__/
+*.py[cod]
+data/
+data/domain_gate_eval/
+models/
+evals/results/
+*.pdf
+*.log
+docs/
+tests/
