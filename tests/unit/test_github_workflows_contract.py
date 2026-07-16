@@ -57,5 +57,6 @@ def test_image_audit_runs_the_published_digest_from_a_clean_clone() -> None:
     assert "docker export" in text
     assert "^app/.*\\.log$" in text
     assert "scripts/start_services.sh --no-browser" in text
+    assert "data['items'] == []" in text
     assert "if: always()" in text
     assert "sudo rm -rf data models .env" in text
