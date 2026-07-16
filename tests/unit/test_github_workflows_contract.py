@@ -55,5 +55,6 @@ def test_image_audit_runs_the_published_digest_from_a_clean_clone() -> None:
     assert "python scripts/release_audit.py check-tracked" in text
     assert "import fitz; import paper_rag" in text
     assert "docker export" in text
+    assert "^app/.*\\.log$" in text
     assert "scripts/start_services.sh --no-browser" in text
     assert "if: always()" in text

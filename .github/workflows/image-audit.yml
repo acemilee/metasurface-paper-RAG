@@ -41,7 +41,7 @@ jobs:
           grep -qx 'app/LICENSE' "$RUNNER_TEMP/image-files.txt"
           grep -qx 'app/THIRD_PARTY_NOTICES.md' "$RUNNER_TEMP/image-files.txt"
           grep -qx 'app/src/' "$RUNNER_TEMP/image-files.txt"
-          if grep -Ei '\.pdf$|(^|/)\.env$|^app/data/uploads/.+|^app/data/chroma/.+|^app/models/.+|\.db$|\.sqlite$|\.log$|^app/docs/|^app/evals/' "$RUNNER_TEMP/image-files.txt"; then
+          if grep -Ei '^app/.*\.pdf$|^app/\.env$|^app/data/uploads/.+|^app/data/chroma/.+|^app/models/.+|^app/.*\.db$|^app/.*\.sqlite$|^app/.*\.log$|^app/docs/|^app/evals/' "$RUNNER_TEMP/image-files.txt"; then
             echo "Forbidden private content found in the published image." >&2
             exit 1
           fi
